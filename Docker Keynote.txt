@@ -1,0 +1,140 @@
+docker pull ubuntu
+docker pull ubuntu:18.04
+
+docker run echo "hello world"
+docker run -i -t ubuntu bash
+
+-i = interactive
+-t = tty
+bash = terminal
+
+docker run --name ubuntu-universe ubuntu echo "Hello Universe"
+
+docker rm "container name/container id"
+
+
+แบบ Foreground ปิดแล้วหาย
+docker run nginx:alpine
+
+แบบ Background
+docker run -d nginx:alpine
+
+Background forward port
+docker run -d -p 8080:80 nginx:alpine
+
+docker rename "container name" "new name"s
+
+docker exec -it nginx sh
+
+-it = -i -t
+
+docker top "container name"
+
+docker stop "container name"
+docker start "container name"
+docker logs "container name"
+docker logs "container name" -f
+
+docker stats
+
+docker inspect "images/container"
+
+docker rm -f "container"
+docker rm "container"
+
+remove images
+docker rmi "images"
+
+ตัวอย่าง Dockerfile
+build images
+
+FROM node:14.15.0-alpine3.12
+
+WORKDIR /usr/src/app
+
+COPY src/ /usr/src/app/
+
+RUN npm install
+
+EXPOSE 8080
+
+CMD ["node", "/usr/src/app/ratings.js","8080"]
+
+ในกรณีที่ Dockerfile ชื่อ "Dockerfile"
+docker build -t ratings .
+
+แต่ถ้า เราตั้งชื่ออื่น เช่น Dockerfile.dev ให้ใช้ -f 
+docker build -t ratings -f Dockerfile.dev .
+
+
+docker run -d --name mogodb -p 27017:27017 bitnami/mogodb:4.4.2-debian-10-r0
+
+docker exec -i -t "mogodb" mongo
+
+
+===
+การสร้าง ratings app 
+docker run -d --name ratings -p 8080:8080 -e SERVICE_VERSION=v2 -e 'MONGO_DB_URL=mongodb://mongodb:27017/ratings' --link mongodb:mongodb ratings
+
+ความหมายคือ
+ --link mongodb:mongodb ใช้กับการ Map DNS mongodb ตัวแรก (ชื่อ container) ให้เป็น DNS mongodb ตัวหลัง
+'MONGO_DB_URL=mongodb://mongodb:27017/ratings' ตัวแรกสุดคือ protocol ถัดมาคือ DNS ที่เคยถูก map แล้วให้เข้าไปที่ DB ratings
+
+
+mount volume
+docker run -d --name mongodb -p 27017:27017 -v $(pwd)/databases:/docker-entrypoint-initdb.d bitnami/mongodb:4.4.2-debian-10-r0
+
+$(pwd)/database ในเครื่องเรา full path
+
+
+show dbs
+use ratings
+show collections
+db.ratings.find()
+
+
+
+==docker compose===
+
+
+docker-compose version
+docker-compose up
+docker-compose up -d
+docker-compose stop
+docker-compose up
+
+ทั้งหมดจะใช้ File docker-compose.yml
+แต่ถ้าไม่อยากใช้ ชื่อ default
+docker-compose up -f docker-compose-dev.yml
+
+ถ้าอยากจะ clear container (ไม่ clear docker images)
+docker-compose down
+
+มันจะทำงานที่ current directory
+
+Ex Basic docker compose
+
+version: '3.8'
+services:
+  ratings:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SERVICE_VERSION: v1
+
+Ex advanced version แทนคอมมานยั้ยวเยี้ยด้านบน
+version: '3.8'
+services:
+  ratings:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SERVICE_VERSION: v2
+  mongodb:
+    image: bitnami/mongodb:4.4.2-debian-10-r0
+    volumes:
+      - "./databases:/docker-entrypoint-initdb.d
+
+
